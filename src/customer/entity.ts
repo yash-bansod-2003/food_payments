@@ -3,8 +3,10 @@ import {
   PrimaryGeneratedColumn,
   Column,
   UpdateDateColumn,
+  OneToMany,
   CreateDateColumn,
 } from "typeorm";
+import { Address } from "@/address/entity";
 
 @Entity("customers")
 export class Customer {
@@ -19,6 +21,9 @@ export class Customer {
 
   @Column({ type: "text", unique: true })
   email: string;
+
+  @OneToMany(() => Address, (address) => address.customer)
+  addresses: Address[];
 
   @CreateDateColumn()
   created_at: Date;
