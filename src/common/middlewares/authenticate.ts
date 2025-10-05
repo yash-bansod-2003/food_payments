@@ -2,6 +2,7 @@ import { Request, RequestHandler } from "express";
 import jwksClient from "jwks-rsa";
 import { expressjwt, GetVerificationKey } from "express-jwt";
 import configuration from "@/common/lib/configuration";
+import { ROLES } from "@/common/lib/constants";
 
 const authenticate: RequestHandler = expressjwt({
   secret: jwksClient.expressJwtSecret({
@@ -33,7 +34,7 @@ export default authenticate;
 export interface AuthenticatedRequest extends Request {
   auth: {
     sub: string;
-    role: string;
+    role: ROLES;
     restaurantId: number;
     iat: number;
     exp: number;
