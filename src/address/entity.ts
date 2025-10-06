@@ -5,8 +5,10 @@ import {
   UpdateDateColumn,
   CreateDateColumn,
   ManyToOne,
+  OneToMany,
 } from "typeorm";
 import { Customer } from "@/customer/entity";
+import { Order } from "@/order/entity";
 
 @Entity("addresses")
 export class Address {
@@ -35,6 +37,9 @@ export class Address {
     onDelete: "CASCADE",
   })
   customer: Customer;
+
+  @OneToMany(() => Order, (order) => order.id)
+  orders: Order[];
 
   @CreateDateColumn()
   created_at: Date;

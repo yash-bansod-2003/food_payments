@@ -3,6 +3,8 @@ import { DataSource } from "typeorm";
 import configuration from "./common/lib/configuration";
 import { Customer } from "./customer/entity";
 import { Address } from "./address/entity";
+import { Coupon } from "./coupon/entity";
+import { Order } from "./order/entity";
 import path from "node:path";
 
 export const AppDataSource = new DataSource({
@@ -14,6 +16,6 @@ export const AppDataSource = new DataSource({
   database: configuration.database.database,
   synchronize: false,
   logging: false,
-  entities: [Customer, Address],
+  entities: [Customer, Address, Coupon, Order],
   migrations: [path.join(__dirname, "migrations/**/*.{js,ts}")],
 });

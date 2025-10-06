@@ -4,7 +4,9 @@ import {
   Column,
   UpdateDateColumn,
   CreateDateColumn,
+  OneToMany,
 } from "typeorm";
+import { Order } from "@/order/entity";
 
 @Entity("coupons")
 export class Coupon {
@@ -20,11 +22,14 @@ export class Coupon {
   @Column({ type: "int" })
   discount: number;
 
-  @Column({ type: "datetime" })
+  @Column({ type: "timestamp" })
   validity: Date;
 
   @Column({ type: "int" })
   restaurantId: number;
+
+  @OneToMany(() => Order, (order) => order.id)
+  orders: Order[];
 
   @CreateDateColumn()
   created_at: Date;
