@@ -5,6 +5,7 @@ import {
   UpdateDateColumn,
   CreateDateColumn,
   OneToMany,
+  Index
 } from "typeorm";
 import { Order } from "@/order/entity";
 
@@ -16,6 +17,7 @@ export class Coupon {
   @Column({ type: "text" })
   title: string;
 
+  @Index()
   @Column({ type: "text", unique: true })
   code: string;
 

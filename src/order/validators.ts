@@ -2,24 +2,25 @@ import { z } from "zod";
 import { NextFunction, Request, Response } from "express";
 import { PaymentMode } from "./types";
 
+export const cartItemValidationSchema = z.object({
+  _id: z.string(),
+  priceConfiguration: z.map(z.string(), z.object({
+    priceType: z.enum(["base", "additional"]),
+    availableOptions: z.map(z.string(), z.number())
+  })),
+  quantity: z.number().min(1),
+})
+
 export const orderCreateValidationSchema = z
   .object({
+    cart: z.array(cartItemValidationSchema).min(1),
+    coupon: z.string().optional(),
     restaurantId: z.number(),
-    paymentMode: z.nativeEnum(PaymentMode),
+    comment: z.string().optional(),
+    addressId: z.number(),
+    customerId: z.number(),
+    paymentMode: z.enum([PaymentMode.CASH, PaymentMode.CARD, PaymentMode.UPI]),
     metadata: z.record(z.string(), z.unknown()).optional(),
-    customer: z.object({
-      id: z.number(),
-    }),
-    address: z
-      .object({
-        id: z.number(),
-      })
-      .optional(),
-    coupon: z
-      .object({
-        id: z.number(),
-      })
-      .optional(),
   })
   .strict();
 

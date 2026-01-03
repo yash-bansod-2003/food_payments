@@ -5,17 +5,20 @@ import OrdersService from "./service";
 import { CreateOrderDto, UpdateOrderDto } from "./types";
 import { AuthenticatedRequest } from "@/common/middlewares/authenticate";
 import { ROLES } from "@/common/lib/constants";
+import IdempotencyService from "@/idempotency/service";
 
 class OrdersController {
   constructor(
     private readonly orderService: OrdersService,
+    private readonly idempotencyService: IdempotencyService,
     private readonly logger: Logger,
-  ) {}
+  ) { }
 
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     this.logger.info(`Creating order with data: ${JSON.stringify(req.body)}`);
     const order = req.body as CreateOrderDto;
     const { role } = req.auth;
+
     if (
       role === ROLES.MANAGER &&
       order.restaurantId !== req.auth.restaurantId
@@ -27,13 +30,44 @@ class OrdersController {
       return;
     }
 
+    const idempotencyKey = req.headers["idempotency-key"];
+
+    if (!idempotencyKey || typeof idempotencyKey !== "string") {
+      this.logger.error("Idempotency key missing or invalid");
+      next(createHttpError(400, "idempotency key missing or invalid"));
+      return;
+    }
+
     try {
-      const createdOrder = await this.orderService.create(order);
-      this.logger.info(`Order created with id: ${createdOrder.id}`);
-      res.json(createdOrder);
+      const existingIdempotency = await this.idempotencyService.findOne({
+        where: { key: idempotencyKey },
+      });
+
+      if (existingIdempotency) {
+        this.logger.info(`Returning cached response for idempotency key: ${idempotencyKey}`);
+        return res.json(existingIdempotency.response);
+      }
+
+      // Create order and idempotency record in transaction
+      const result = await this.orderService.create(order);
+
+      this.logger.info(`Order created with id: ${result.id}`);
+      res.status(201).json(result);
       return;
     } catch (error) {
       this.logger.error(`Error creating order: ${(error as Error).message}`);
+
+      // Store failed idempotency record
+      try {
+        await this.idempotencyService.create({
+          key: idempotencyKey,
+          statusCode: 500,
+          response: { error: "internal server error" },
+        });
+      } catch (idempotencyError) {
+        this.logger.error(`Error storing idempotency record: ${(idempotencyError as Error).message}`);
+      }
+
       next(createHttpError(500, "internal server error"));
       return;
     }

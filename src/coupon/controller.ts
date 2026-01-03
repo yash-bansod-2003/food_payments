@@ -5,30 +5,41 @@ import CouponsService from "./service";
 import { Coupon } from "./types";
 import { AuthenticatedRequest } from "@/common/middlewares/authenticate";
 import { ROLES } from "@/common/lib/constants";
+import { couponValidationSchema } from "./validators";
+import z from "zod";
 
 class CouponsController {
   constructor(
     private readonly couponService: CouponsService,
     private readonly logger: Logger,
-  ) {}
+  ) { }
 
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     this.logger.info(`Creating coupon with data: ${JSON.stringify(req.body)}`);
-    const coupon = req.body as Coupon;
+    const couponData = req.body as z.infer<typeof couponValidationSchema>;
     const { role } = req.auth;
     if (
       role === ROLES.MANAGER &&
-      coupon.restaurantId !== req.auth.restaurantId
+      couponData.restaurantId !== req.auth.restaurantId
     ) {
       this.logger.error(
-        `Manager with id: ${req.auth.sub} attempted to create coupon for restaurantId: ${coupon.restaurantId}`,
+        `Manager with id: ${req.auth.sub} attempted to create coupon for restaurantId: ${couponData.restaurantId}`,
       );
       next(createHttpError(403, "forbidden"));
       return;
     }
 
     try {
-      const createdCoupon = await this.couponService.create(coupon);
+      const coupon = await this.couponService.findOne({
+        where: { code: couponData.code },
+      });
+
+      if (coupon) {
+        this.logger.error(`Coupon with code: ${couponData.code} already exists`);
+        next(createHttpError(409, "coupon code already exists"));
+        return;
+      }
+      const createdCoupon = await this.couponService.create(couponData);
       this.logger.info(`Coupon created with id: ${createdCoupon.id}`);
       res.json(createdCoupon);
       return;

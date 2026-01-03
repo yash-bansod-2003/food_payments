@@ -4,23 +4,25 @@ import { createServer } from "@/server";
 import configuration from "@/common/lib/configuration";
 import { AppDataSource } from "@/data-source";
 import logger from "@/common/lib/logger";
+import { createMessageBrokerFactory } from "./common/factories/brokerFactory.js";
 
 const port = configuration.port;
 const host = configuration.host;
 const server: Express = createServer();
+const messageBroker = createMessageBrokerFactory();
 
-server.listen(port, host, () => {
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+server.listen(port, host, async () => {
   try {
-    AppDataSource.initialize()
-      .then(() => {
-        logger.info(`Server Listening on  http://${host}:${port}`);
-      })
-      .catch((err) => {
-        logger.error("Error during Data Source initialization", err);
-        throw err;
-      });
+    await AppDataSource.initialize()
+    await messageBroker.connect();
+    logger.info("Kafka connected successfully");
+    await messageBroker.consumeMessages(["product-topic"]);
+    logger.info("Subscribed to product-topic successfully");
+    logger.info(`Server Listening on  http://${host}:${port}`);
   } catch (error: unknown) {
-    console.error(error);
+    logger.error(error);
+    await messageBroker.disconnect();
     process.exit(1);
   }
 });

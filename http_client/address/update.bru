@@ -1,0 +1,21 @@
+meta {
+  name: update
+  type: http
+  seq: 4
+}
+
+patch {
+  url: http://localhost:5003/addresses/1
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "line1" : "Shingnapur 2, Daryapur",
+    "city" : "Amravati",
+    "state" : "Maharashtra",
+    "postal_code" : "444802",
+    "country" : "IN"
+  }
+}

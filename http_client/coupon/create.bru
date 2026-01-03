@@ -1,0 +1,21 @@
+meta {
+  name: create
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:5003/coupons
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "The special offer on diwali on all items.",
+    "code": "DIWALI10",
+    "discount": 10,
+    "validity": "2025-10-18T13:04:39.000Z",
+    "restaurantId": 1
+  }
+}
