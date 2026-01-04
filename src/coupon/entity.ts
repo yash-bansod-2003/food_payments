@@ -3,28 +3,32 @@ import {
   PrimaryGeneratedColumn,
   Column,
   UpdateDateColumn,
-  OneToMany,
   CreateDateColumn,
+  OneToMany,
+  Index,
 } from "typeorm";
-import { Address } from "@/address/entity";
 import { Order } from "@/order/entity";
 
-@Entity("customers")
-export class Customer {
+@Entity("coupons")
+export class Coupon {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: "text" })
-  firstname: string;
+  title: string;
 
-  @Column({ type: "text" })
-  lastname: string;
-
+  @Index()
   @Column({ type: "text", unique: true })
-  email: string;
+  code: string;
 
-  @OneToMany(() => Address, (address) => address.customer)
-  addresses: Address[];
+  @Column({ type: "int" })
+  discount: number;
+
+  @Column({ type: "timestamp" })
+  validity: Date;
+
+  @Column({ type: "int" })
+  restaurantId: number;
 
   @OneToMany(() => Order, (order) => order.id)
   orders: Order[];

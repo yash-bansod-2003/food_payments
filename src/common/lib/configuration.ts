@@ -21,6 +21,12 @@ const configuration = {
   cookies: {
     domain: process.env.COOKIE_DOMAIN,
   },
+  kafka: {
+    clientId: process.env.KAFKA_CLIENT_ID || "payment-service",
+    brokers: process.env.KAFKA_BROKERS
+      ? process.env.KAFKA_BROKERS.split(",")
+      : ["localhost:9092"],
+  },
 };
 
 export default configuration;

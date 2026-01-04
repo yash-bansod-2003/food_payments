@@ -5,6 +5,9 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import customerRouter from "@/customer/router";
+import addressRouter from "@/address/router";
+import couponRouter from "@/coupon/router";
+import ordersRouter from "@/order/router";
 import errorHandler from "@/common/middlewares/error-handler";
 import configuration from "@/common/lib/configuration";
 
@@ -29,6 +32,9 @@ export const createServer = (): Express => {
       res.json({ message: `hello ${req.params.name}` });
     })
     .use("/customers", customerRouter)
+    .use("/addresses", addressRouter)
+    .use("/coupons", couponRouter)
+    .use("/orders", ordersRouter)
     .use(errorHandler as unknown as ErrorRequestHandler);
   return app;
 };

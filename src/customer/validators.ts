@@ -6,7 +6,6 @@ export const customerValidationSchema = z
     firstname: z.string(),
     lastname: z.string(),
     email: z.string(),
-    password: z.string(),
   })
   .strict();
 
