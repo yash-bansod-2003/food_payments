@@ -8,7 +8,7 @@ class AddressesController {
   constructor(
     private readonly addressService: AddressService,
     private readonly logger: Logger,
-  ) { }
+  ) {}
 
   async create(req: Request, res: Response, next: NextFunction) {
     this.logger.info(`Creating address with data: ${JSON.stringify(req.body)}`);

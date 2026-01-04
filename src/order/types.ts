@@ -3,7 +3,7 @@ import {
   orderCreateValidationSchema,
   orderUpdateValidationSchema,
   orderQueryValidationSchema,
-  cartItemValidationSchema
+  cartItemValidationSchema,
 } from "./validators";
 
 export type CreateOrderDto = z.infer<typeof orderCreateValidationSchema>;
@@ -12,9 +12,9 @@ export type OrderQuery = z.infer<typeof orderQueryValidationSchema>;
 export type CartItem = z.infer<typeof cartItemValidationSchema>;
 
 export enum PaymentMode {
-  CASH = "CASH",
-  CARD = "CARD",
-  UPI = "UPI",
+  CASH = "cash",
+  CARD = "card",
+  UPI = "upi",
 }
 
 export enum PaymentStatus {

@@ -5,7 +5,9 @@ class ProductBrokerHandler {
   async handleProductCreateOrUpdate(message: string) {
     try {
       const productData = JSON.parse(message) as ProductMessage;
-      const existingProduct = await productService.findOne({ where: { id: productData._id } });
+      const existingProduct = await productService.findOne({
+        where: { id: productData._id },
+      });
 
       if (!existingProduct) {
         await productService.create({
@@ -23,7 +25,7 @@ class ProductBrokerHandler {
           name: productData.name,
           priceConfigurations: productData.priceConfigurations,
           restaurantId: productData.restaurentId,
-        }
+        },
       );
       console.log(`Product updated with ID: ${productData._id}`);
     } catch (error) {

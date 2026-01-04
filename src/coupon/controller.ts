@@ -12,7 +12,7 @@ class CouponsController {
   constructor(
     private readonly couponService: CouponsService,
     private readonly logger: Logger,
-  ) { }
+  ) {}
 
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     this.logger.info(`Creating coupon with data: ${JSON.stringify(req.body)}`);
@@ -35,7 +35,9 @@ class CouponsController {
       });
 
       if (coupon) {
-        this.logger.error(`Coupon with code: ${couponData.code} already exists`);
+        this.logger.error(
+          `Coupon with code: ${couponData.code} already exists`,
+        );
         next(createHttpError(409, "coupon code already exists"));
         return;
       }

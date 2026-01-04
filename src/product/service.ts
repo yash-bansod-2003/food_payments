@@ -14,18 +14,13 @@ import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity
 import { AppDataSource } from "@/data-source";
 
 class ProductService {
-  constructor(private readonly productRepository: Repository<Product>) { }
+  constructor(private readonly productRepository: Repository<Product>) {}
 
-  async create(
-    createProductDto: DeepPartial<Product>,
-    options?: SaveOptions,
-  ) {
+  async create(createProductDto: DeepPartial<Product>, options?: SaveOptions) {
     return await this.productRepository.save(createProductDto, options);
   }
 
-  findAll(
-    options?: FindManyOptions<Product>,
-  ): Promise<[Product[], number]> {
+  findAll(options?: FindManyOptions<Product>): Promise<[Product[], number]> {
     return this.productRepository.findAndCount(options);
   }
 
@@ -56,3 +51,4 @@ class ProductService {
 
 const productRepository = AppDataSource.getRepository(Product);
 export const productService = new ProductService(productRepository);
+export default ProductService;

@@ -5,7 +5,7 @@ import {
   UpdateDateColumn,
   CreateDateColumn,
   OneToMany,
-  Index
+  Index,
 } from "typeorm";
 import { Order } from "@/order/entity";
 

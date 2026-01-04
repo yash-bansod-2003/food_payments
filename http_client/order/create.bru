@@ -5,14 +5,40 @@ meta {
 }
 
 post {
-  url: http://localhost:5003/order
+  url: http://localhost:5003/orders
   body: json
   auth: none
 }
 
 body:json {
   {
-    "name" : "Hotel Maharaja",
-    "address" : "Amravati"
+    "cart": [
+      {
+        "product": {
+          "_id": "68e184555ed4a7d4587187bc",
+          "name": "Pizza Updated",
+          "quantity": 2
+        },
+        "chosenConfiguration": {
+          "priceConfigurations": {
+            "size": "Small",
+            "crust": "Thin"
+          },
+          "selectedToppings": [
+            {
+              "_id": "695a2ad3b97d09e4696a46e2",
+              "name": "Pizza",
+              "price": 50
+            }
+          ]
+        }
+      }
+    ],
+    "coupon": "DIWALI10",
+    "restaurantId": 1,
+    "comment": "Please make sure to include free gift",
+    "addressId": 1,
+    "customerId": 1,
+    "paymentMode": "cash"
   }
 }

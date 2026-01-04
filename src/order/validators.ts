@@ -3,13 +3,22 @@ import { NextFunction, Request, Response } from "express";
 import { PaymentMode } from "./types";
 
 export const cartItemValidationSchema = z.object({
-  _id: z.string(),
-  priceConfiguration: z.map(z.string(), z.object({
-    priceType: z.enum(["base", "additional"]),
-    availableOptions: z.map(z.string(), z.number())
-  })),
-  quantity: z.number().min(1),
-})
+  product: z.object({
+    _id: z.string(),
+    name: z.string(),
+    quantity: z.number().min(1),
+  }),
+  chosenConfiguration: z.object({
+    priceConfigurations: z.object(),
+    selectedToppings: z.array(
+      z.object({
+        _id: z.string(),
+        name: z.string(),
+        price: z.number(),
+      }),
+    ),
+  }),
+});
 
 export const orderCreateValidationSchema = z
   .object({
@@ -27,7 +36,9 @@ export const orderCreateValidationSchema = z
 export const orderUpdateValidationSchema = z
   .object({
     restaurantId: z.number().optional(),
-    paymentMode: z.nativeEnum(PaymentMode).optional(),
+    paymentMode: z
+      .enum([PaymentMode.CARD, PaymentMode.CASH, PaymentMode.UPI])
+      .optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
     customer: z
       .object({
@@ -52,7 +63,9 @@ export const orderQueryValidationSchema = z
     page: z.number().optional(),
     limit: z.number().optional(),
     restaurantId: z.number().optional(),
-    paymentMode: z.nativeEnum(PaymentMode).optional(),
+    paymentMode: z
+      .enum([PaymentMode.CARD, PaymentMode.CASH, PaymentMode.UPI])
+      .optional(),
   })
   .strict();
 

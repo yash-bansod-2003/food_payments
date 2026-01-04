@@ -14,11 +14,11 @@ const messageBroker = createMessageBrokerFactory();
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 server.listen(port, host, async () => {
   try {
-    await AppDataSource.initialize()
+    await AppDataSource.initialize();
     await messageBroker.connect();
     logger.info("Kafka connected successfully");
-    await messageBroker.consumeMessages(["product-topic"]);
-    logger.info("Subscribed to product-topic successfully");
+    await messageBroker.consumeMessages(["product-topic", "toppings-topic"]);
+    logger.info("Subscribed to product-topic and toppings-topic successfully");
     logger.info(`Server Listening on  http://${host}:${port}`);
   } catch (error: unknown) {
     logger.error(error);

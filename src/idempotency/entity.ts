@@ -4,7 +4,7 @@ import {
   Column,
   UpdateDateColumn,
   CreateDateColumn,
-  Index
+  Index,
 } from "typeorm";
 
 @Entity("idempotency")

@@ -6,11 +6,21 @@ import { CreateOrderDto, UpdateOrderDto } from "./types";
 import { AuthenticatedRequest } from "@/common/middlewares/authenticate";
 import { ROLES } from "@/common/lib/constants";
 import IdempotencyService from "@/idempotency/service";
+import CouponsService from "@/coupon/service";
+import CustomersService from "@/customer/service";
+import AddressesService from "@/address/service";
+import ProductsService from "@/product/service";
+import ToppingService from "@/toppings/service";
 
 class OrdersController {
   constructor(
     private readonly orderService: OrdersService,
     private readonly idempotencyService: IdempotencyService,
+    private readonly customerService: CustomersService,
+    private readonly productService: ProductsService,
+    private readonly toppingService: ToppingService,
+    private readonly addressService: AddressesService,
+    private readonly couponService: CouponsService,
     private readonly logger: Logger,
   ) { }
 
@@ -30,6 +40,98 @@ class OrdersController {
       return;
     }
 
+    const coupon = await this.couponService.findOne({
+      where: { code: order.coupon },
+    });
+
+    if (order.coupon && !coupon) {
+      this.logger.error(`Coupon with code: ${order.coupon} not found`);
+      next(createHttpError(400, "invalid coupon code"));
+      return;
+    }
+
+    const customer = await this.customerService.findOne({
+      where: { id: order.customerId },
+    });
+
+    if (!customer) {
+      this.logger.error(`Customer with id: ${order.customerId} not found`);
+      next(createHttpError(400, "invalid customer id"));
+      return;
+    }
+
+    const address = await this.addressService.findOne({
+      where: { id: order.addressId },
+    });
+
+    if (!address) {
+      this.logger.error(`Address with id: ${order.addressId} not found`);
+      next(createHttpError(400, "invalid address id"));
+      return;
+    }
+
+    let total = 0;
+
+    for (const cartItem of order.cart) {
+      if (cartItem.product.quantity <= 0) {
+        this.logger.error(
+          `Product with id: ${cartItem.product._id} has invalid quantity: ${cartItem.product.quantity}`,
+        );
+        next(
+          createHttpError(
+            400,
+            `invalid quantity for product id: ${cartItem.product._id}`,
+          ),
+        );
+        return;
+      }
+
+      const product = await this.productService.findOne({
+        where: { id: cartItem.product._id },
+      });
+
+      if (!product) {
+        this.logger.error(`Product with id: ${cartItem.product._id} not found`);
+        next(
+          createHttpError(400, `invalid product id: ${cartItem.product._id}`),
+        );
+        return;
+      }
+
+      for (const toppingItem of cartItem.chosenConfiguration.selectedToppings) {
+        const topping = await this.toppingService.findOne({
+          where: { id: toppingItem._id },
+        });
+
+        if (!topping) {
+          this.logger.error(`Topping with id: ${toppingItem._id} not found`);
+          next(createHttpError(400, `invalid topping id: ${toppingItem._id}`));
+          return;
+        }
+      }
+
+      const selectedToppingsTotal =
+        cartItem.chosenConfiguration.selectedToppings.reduce(
+          (sum, topping) => sum + topping.price,
+          0,
+        );
+
+      const priceConfigurationsTotal = Object.entries(
+        cartItem.chosenConfiguration.priceConfigurations,
+      ).reduce((sum, [key, value]) => {
+        const record = product.priceConfigurations[key];
+        const price = record.availableOptions[value] || 0;
+        return sum + price;
+      }, 0);
+
+      const totalExcludeQuantity =
+        selectedToppingsTotal + priceConfigurationsTotal;
+      const discount = coupon.discount || 0;
+      const totalWithoutDiscount =
+        totalExcludeQuantity * cartItem.product.quantity;
+      total = totalWithoutDiscount - (totalWithoutDiscount * discount) / 100;
+    }
+
     const idempotencyKey = req.headers["idempotency-key"];
 
     if (!idempotencyKey || typeof idempotencyKey !== "string") {
@@ -44,12 +146,22 @@ class OrdersController {
       });
 
       if (existingIdempotency) {
-        this.logger.info(`Returning cached response for idempotency key: ${idempotencyKey}`);
+        this.logger.info(
+          `Returning cached response for idempotency key: ${idempotencyKey}`,
+        );
         return res.json(existingIdempotency.response);
       }
 
-      // Create order and idempotency record in transaction
-      const result = await this.orderService.create(order);
+      const result = await this.orderService.create({
+        address,
+        customer,
+        coupon: coupon || null,
+        paymentMode: order.paymentMode,
+        restaurantId: order.restaurantId,
+        metadata: {
+          total: total,
+        },
+      });
 
       this.logger.info(`Order created with id: ${result.id}`);
       res.status(201).json(result);
@@ -61,11 +173,12 @@ class OrdersController {
       try {
         await this.idempotencyService.create({
           key: idempotencyKey,
-          statusCode: 500,
-          response: { error: "internal server error" },
+          response: { error: "internal server error", status: 500 },
         });
       } catch (idempotencyError) {
-        this.logger.error(`Error storing idempotency record: ${(idempotencyError as Error).message}`);
+        this.logger.error(
+          `Error storing idempotency record: ${(idempotencyError as Error).message}`,
+        );
       }
 
       next(createHttpError(500, "internal server error"));

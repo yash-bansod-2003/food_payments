@@ -12,7 +12,9 @@ import { Idempotency } from "./entity";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 class IdempotencyService {
-  constructor(private readonly idempotencyRepository: Repository<Idempotency>) { }
+  constructor(
+    private readonly idempotencyRepository: Repository<Idempotency>,
+  ) {}
   /**
    * Create a new idempotency record in the database.
    *
@@ -20,7 +22,10 @@ class IdempotencyService {
    * @param options The options to be passed to the save method of the repository.
    * @returns A Promise that resolves to the created Idempotency.
    */
-  async create(createIdempotencyDto: DeepPartial<Idempotency>, options?: SaveOptions) {
+  async create(
+    createIdempotencyDto: DeepPartial<Idempotency>,
+    options?: SaveOptions,
+  ) {
     return await this.idempotencyRepository.save(createIdempotencyDto, options);
   }
 
@@ -30,7 +35,9 @@ class IdempotencyService {
    * @param options The options to be passed to the find method of the repository.
    * @returns A Promise that resolves to an array of Idempotency objects.
    */
-  async findAll(options?: FindManyOptions<Idempotency>): Promise<[Idempotency[], number]> {
+  async findAll(
+    options?: FindManyOptions<Idempotency>,
+  ): Promise<[Idempotency[], number]> {
     return await this.idempotencyRepository.findAndCount(options);
   }
 
@@ -40,7 +47,9 @@ class IdempotencyService {
    * @param options The options to be passed to the findOne method of the repository.
    * @returns A Promise that resolves to the Idempotency, or null if no Idempotency matches the criteria.
    */
-  async findOne(options: FindOneOptions<Idempotency>): Promise<Idempotency | null> {
+  async findOne(
+    options: FindOneOptions<Idempotency>,
+  ): Promise<Idempotency | null> {
     return await this.idempotencyRepository.findOne(options);
   }
 
@@ -55,7 +64,10 @@ class IdempotencyService {
     criteria: FindOptionsWhere<Idempotency>,
     idempotencyUpdateDto: QueryDeepPartialEntity<Idempotency>,
   ): Promise<UpdateResult> {
-    return await this.idempotencyRepository.update(criteria, idempotencyUpdateDto);
+    return await this.idempotencyRepository.update(
+      criteria,
+      idempotencyUpdateDto,
+    );
   }
 
   /**

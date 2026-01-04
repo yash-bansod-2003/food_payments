@@ -1,6 +1,13 @@
 import { MessageBroker } from "@/common/types/broker.js";
-import { Kafka, Producer, Consumer, Partitioners, EachMessagePayload } from "kafkajs";
+import {
+  Kafka,
+  Producer,
+  Consumer,
+  Partitioners,
+  EachMessagePayload,
+} from "kafkajs";
 import { productBrokerHandler } from "../../product/brokerHandler";
+import { toppingsBrokerHandler } from "../../toppings/brokerHandler";
 
 export class KafkaBroker implements MessageBroker {
   private readonly producer: Producer;
@@ -14,7 +21,7 @@ export class KafkaBroker implements MessageBroker {
     this.producer = kafka.producer({
       createPartitioner: Partitioners.DefaultPartitioner,
     });
-    this.consumer = kafka.consumer({ groupId: 'default-group' });
+    this.consumer = kafka.consumer({ groupId: "default-group" });
   }
 
   async connect(): Promise<void> {
@@ -40,7 +47,7 @@ export class KafkaBroker implements MessageBroker {
 
   async consumeMessages(
     topics: string[],
-    fromBeginning: boolean = false
+    fromBeginning: boolean = false,
   ): Promise<void> {
     if (!this.consumer) {
       throw new Error("Consumer is not initialized");
@@ -48,14 +55,25 @@ export class KafkaBroker implements MessageBroker {
     await this.consumer.connect();
     await this.consumer.subscribe({ topics, fromBeginning });
     await this.consumer.run({
-      eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
+      eachMessage: async ({
+        topic,
+        partition,
+        message,
+      }: EachMessagePayload) => {
         console.log({
           topic,
           partition,
           value: message.value?.toString(),
         });
         if (topic === "product-topic" && message.value) {
-          await productBrokerHandler.handleProductCreateOrUpdate(message.value.toString());
+          await productBrokerHandler.handleProductCreateOrUpdate(
+            message.value.toString(),
+          );
+        }
+        if (topic === "toppings-topic" && message.value) {
+          await toppingsBrokerHandler.handleToppingCreateOrUpdate(
+            message.value.toString(),
+          );
         }
       },
     });

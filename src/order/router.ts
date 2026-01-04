@@ -10,12 +10,40 @@ import authorization from "@/common/middlewares/authorization";
 import logger from "@/common/lib/logger";
 import { ROLES } from "@/common/lib/constants";
 import { orderCreateValidator, orderUpdateValidator } from "./validators";
+import CustomersService from "@/customer/service";
+import { productService } from "@/product/service";
+import { toppingService } from "@/toppings/service";
+import AddressesService from "@/address/service";
+import CouponsService from "@/coupon/service";
+import IdempotencyService from "@/idempotency/service";
+import { Idempotency } from "@/idempotency/entity";
+import { Customer } from "@/customer/entity";
+import { Coupon } from "@/coupon/entity";
+import { Address } from "@/address/entity";
 
 const router = Router();
 
+const idempotencyRepository = AppDataSource.getRepository(Idempotency);
+const idempotencyService = new IdempotencyService(idempotencyRepository);
+const customersRepository = AppDataSource.getRepository(Customer);
+const customerService = new CustomersService(customersRepository);
+const addressRepository = AppDataSource.getRepository(Address);
+const addressService = new AddressesService(addressRepository);
+const couponRepository = AppDataSource.getRepository(Coupon);
+const couponService = new CouponsService(couponRepository);
+
 const ordersRepository = AppDataSource.getRepository(Order);
 const orderService = new OrdersService(ordersRepository);
-const ordersController = new OrdersController(orderService, logger);
+const ordersController = new OrdersController(
+  orderService,
+  idempotencyService,
+  customerService,
+  productService,
+  toppingService,
+  addressService,
+  couponService,
+  logger,
+);
 
 router.post(
   "/",
