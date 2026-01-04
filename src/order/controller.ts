@@ -22,7 +22,7 @@ class OrdersController {
     private readonly addressService: AddressesService,
     private readonly couponService: CouponsService,
     private readonly logger: Logger,
-  ) { }
+  ) {}
 
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     this.logger.info(`Creating order with data: ${JSON.stringify(req.body)}`);
