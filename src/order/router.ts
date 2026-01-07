@@ -20,7 +20,7 @@ import { Idempotency } from "@/idempotency/entity";
 import { Customer } from "@/customer/entity";
 import { Coupon } from "@/coupon/entity";
 import { Address } from "@/address/entity";
-import { createPaymentGatewayFactory } from "@/common/factories/paymentGatewayFactory.js";
+import { createPaymentGatewayFactory } from "@/common/factories/paymentGatewayFactory";
 
 const router = Router();
 

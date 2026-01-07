@@ -1,4 +1,4 @@
-import { MessageBroker } from "@/common/types/broker.js";
+import { MessageBroker } from "@/common/types/broker";
 import {
   Kafka,
   Producer,

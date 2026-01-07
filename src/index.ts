@@ -4,7 +4,7 @@ import { createServer } from "@/server";
 import configuration from "@/common/lib/configuration";
 import { AppDataSource } from "@/data-source";
 import logger from "@/common/lib/logger";
-import { createMessageBrokerFactory } from "./common/factories/brokerFactory.js";
+import { createMessageBrokerFactory } from "./common/factories/brokerFactory";
 
 const port = configuration.port;
 const host = configuration.host;
