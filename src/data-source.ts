@@ -7,7 +7,7 @@ import { Coupon } from "./coupon/entity";
 import { Order } from "./order/entity";
 import { Product } from "./product/entity";
 import { Topping } from "./toppings/entity";
-
+import { Idempotency } from "./idempotency/entity";
 import path from "node:path";
 
 export const AppDataSource = new DataSource({
@@ -19,6 +19,6 @@ export const AppDataSource = new DataSource({
   database: configuration.database.database,
   synchronize: false,
   logging: false,
-  entities: [Customer, Address, Coupon, Order, Product, Topping],
+  entities: [Customer, Address, Coupon, Order, Product, Topping, Idempotency],
   migrations: [path.join(__dirname, "migrations/**/*.{js,ts}")],
 });
