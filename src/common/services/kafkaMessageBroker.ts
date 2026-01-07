@@ -9,7 +9,7 @@ import {
 import { productBrokerHandler } from "../../product/brokerHandler";
 import { toppingsBrokerHandler } from "../../toppings/brokerHandler";
 
-export class KafkaBroker implements MessageBroker {
+export class KafkaMessageBroker implements MessageBroker {
   private readonly producer: Producer;
   private readonly consumer: Consumer;
 

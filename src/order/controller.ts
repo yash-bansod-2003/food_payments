@@ -11,6 +11,7 @@ import CustomersService from "@/customer/service";
 import AddressesService from "@/address/service";
 import ProductsService from "@/product/service";
 import ToppingService from "@/toppings/service";
+import { PaymentGateway } from "@/common/types/paymentGateway";
 
 class OrdersController {
   constructor(
@@ -21,8 +22,9 @@ class OrdersController {
     private readonly toppingService: ToppingService,
     private readonly addressService: AddressesService,
     private readonly couponService: CouponsService,
+    private readonly paymentGateway: PaymentGateway,
     private readonly logger: Logger,
-  ) { }
+  ) {}
 
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     this.logger.info(`Creating order with data: ${JSON.stringify(req.body)}`);
@@ -70,15 +72,12 @@ class OrdersController {
       return;
     }
 
-    interface CalculatedCartItem {
+    const calculatedCart: Array<{
       productId: string;
       quantity: number;
       unitPrice: number;
-      discount: number;
       totalPrice: number;
-    }
-
-    const calculatedCart: CalculatedCartItem[] = [];
+    }> = [];
 
     for (const cartItem of order.cart) {
       if (cartItem.product.quantity <= 0) {
@@ -132,7 +131,6 @@ class OrdersController {
 
       const totalExcludeQuantity =
         selectedToppingsTotal + priceConfigurationsTotal;
-      const discount = coupon.discount ?? 0;
       const totalWithoutDiscount =
         totalExcludeQuantity * cartItem.product.quantity;
 
@@ -140,16 +138,17 @@ class OrdersController {
         productId: product.id,
         quantity: cartItem.product.quantity,
         unitPrice: totalExcludeQuantity,
-        discount,
-        totalPrice:
-          totalWithoutDiscount - (totalWithoutDiscount * discount) / 100,
+        totalPrice: totalWithoutDiscount,
       });
     }
 
-    const total = calculatedCart.reduce(
+    const discount = coupon.discount ?? 0;
+    const totalWithoutDiscount = calculatedCart.reduce(
       (sum, item) => sum + item.totalPrice,
       0,
     );
+    const total =
+      totalWithoutDiscount - (totalWithoutDiscount * discount) / 100;
 
     const idempotencyKey = req.headers["idempotency-key"];
 
@@ -168,8 +167,12 @@ class OrdersController {
         this.logger.info(
           `Returning cached response for idempotency key: ${idempotencyKey}`,
         );
-        const existingIdempotencyResponse = JSON.parse(existingIdempotency.response) as { message: unknown; status: number };
-        return res.json(existingIdempotencyResponse.message).status(existingIdempotencyResponse.status);
+        const existingIdempotencyResponse = JSON.parse(
+          existingIdempotency.response,
+        ) as { message: unknown; status: number };
+        return res
+          .json(existingIdempotencyResponse.message)
+          .status(existingIdempotencyResponse.status);
       }
 
       // TODO: Wrap in transaction
@@ -184,17 +187,28 @@ class OrdersController {
         },
       });
 
+      const { paymentUrl, sessionId } =
+        await this.paymentGateway.createCheckoutSession({
+          amount: total,
+          orderId: result.id,
+          restaurantId: result.restaurantId,
+          idempotencyKey: idempotencyKey,
+        });
+
       await this.idempotencyService.create({
         key: idempotencyKey,
-        response: JSON.stringify({ message: result, status: 201 }),
+        response: JSON.stringify({
+          message: { paymentUrl, sessionId },
+          status: 201,
+        }),
       });
 
       this.logger.info(`Order created with id: ${result.id}`);
-      res.status(201).json(result);
+      res.status(201).json({ paymentUrl, sessionId });
       return;
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : JSON.stringify(err);
+        error instanceof Error ? error.message : JSON.stringify(error);
       this.logger.error(`Error creating order: ${errorMessage}`);
       try {
         await this.idempotencyService.create({
@@ -204,9 +218,11 @@ class OrdersController {
             status: 500,
           }),
         });
-      } catch (error_: unknown) {
+      } catch (idempotencyError: unknown) {
         const idempotencyErrorMessage =
-          error_ instanceof Error ? error_.message : JSON.stringify(error_);
+          idempotencyError instanceof Error
+            ? idempotencyError.message
+            : JSON.stringify(idempotencyError);
         this.logger.error(
           `Error storing idempotency record: ${idempotencyErrorMessage}`,
         );
@@ -233,9 +249,9 @@ class OrdersController {
 
       this.logger.info(`Fetched ${orders.length} orders`);
       return res.json({ page, limit, total, data: orders });
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : JSON.stringify(err);
+        error instanceof Error ? error.message : JSON.stringify(error);
       this.logger.error(`Error fetching all orders: ${errorMessage}`);
       next(createHttpError(500, "internal server error"));
     }
@@ -266,9 +282,9 @@ class OrdersController {
 
       this.logger.info(`Fetched order with id: ${order.id}`);
       res.json(order);
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : JSON.stringify(err);
+        error instanceof Error ? error.message : JSON.stringify(error);
       this.logger.error(
         `Error fetching order with id: ${req.params.id}: ${errorMessage}`,
       );
@@ -321,9 +337,9 @@ class OrdersController {
       );
       this.logger.info(`Order with id: ${req.params.id} updated`);
       res.json(updatedOrder);
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : JSON.stringify(err);
+        error instanceof Error ? error.message : JSON.stringify(error);
       this.logger.error(
         `Error updating order with id: ${req.params.id}: ${errorMessage}`,
       );
@@ -339,9 +355,9 @@ class OrdersController {
       });
       this.logger.info(`Order with id: ${req.params.id} deleted`);
       return res.json(order);
-    } catch (err: unknown) {
+    } catch (error: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : JSON.stringify(err);
+        error instanceof Error ? error.message : JSON.stringify(error);
       this.logger.error(
         `Error deleting order with id: ${req.params.id}: ${errorMessage}`,
       );

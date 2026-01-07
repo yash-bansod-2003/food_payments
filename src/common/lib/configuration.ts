@@ -27,6 +27,9 @@ const configuration = {
       ? process.env.KAFKA_BROKERS.split(",")
       : ["localhost:9092"],
   },
+  stripe: {
+    secret_key: process.env.STRIPE_SECRET_KEY,
+  },
 };
 
 export default configuration;

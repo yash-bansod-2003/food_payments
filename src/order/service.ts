@@ -12,7 +12,7 @@ import { Order } from "./entity";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 class OrdersService {
-  constructor(private readonly ordersRepository: Repository<Order>) { }
+  constructor(private readonly ordersRepository: Repository<Order>) {}
   /**
    * Create a new order in the database.
    *
