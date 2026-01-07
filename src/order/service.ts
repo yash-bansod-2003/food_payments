@@ -10,10 +10,9 @@ import {
 } from "typeorm";
 import { Order } from "./entity";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
-import { CartItem } from "./types";
 
 class OrdersService {
-  constructor(private readonly ordersRepository: Repository<Order>) {}
+  constructor(private readonly ordersRepository: Repository<Order>) { }
   /**
    * Create a new order in the database.
    *
@@ -67,14 +66,6 @@ class OrdersService {
    */
   async delete(criteria: FindOptionsWhere<Order>): Promise<DeleteResult> {
     return await this.ordersRepository.delete(criteria);
-  }
-
-  calculateCartTotal(cart: CartItem[]) {
-    let total = 0;
-    for (const item of cart) {
-      total += 100 * item.quantity;
-    }
-    return total;
   }
 }
 

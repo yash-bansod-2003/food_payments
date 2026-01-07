@@ -44,7 +44,7 @@ jobs:
         with:
           project: "Food"
           path: "."
-          format: "ALL"
+          format: "HTML"
 
       - name: Build the Application
         run: npm run build

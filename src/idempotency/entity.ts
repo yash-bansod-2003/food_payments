@@ -17,7 +17,7 @@ export class Idempotency {
   key: string;
 
   @Column({ type: "jsonb" })
-  response: Record<string, unknown>;
+  response: string;
 
   @CreateDateColumn()
   created_at: Date;

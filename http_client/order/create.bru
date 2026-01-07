@@ -10,9 +10,33 @@ post {
   auth: none
 }
 
+headers {
+  idempotency-key: 543388d1-0712-41b6-a393-c6de85934dd1
+}
+
 body:json {
   {
     "cart": [
+      {
+        "product": {
+          "_id": "68e184555ed4a7d4587187bc",
+          "name": "Pizza Updated",
+          "quantity": 1
+        },
+        "chosenConfiguration": {
+          "priceConfigurations": {
+            "size": "Small",
+            "crust": "Thin"
+          },
+          "selectedToppings": [
+            {
+              "_id": "695a2ad3b97d09e4696a46e2",
+              "name": "Pizza",
+              "price": 50
+            }
+          ]
+        }
+      },
       {
         "product": {
           "_id": "68e184555ed4a7d4587187bc",

@@ -22,7 +22,7 @@ class OrdersController {
     private readonly addressService: AddressesService,
     private readonly couponService: CouponsService,
     private readonly logger: Logger,
-  ) {}
+  ) { }
 
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     this.logger.info(`Creating order with data: ${JSON.stringify(req.body)}`);
@@ -70,7 +70,15 @@ class OrdersController {
       return;
     }
 
-    let total = 0;
+    interface CalculatedCartItem {
+      productId: string;
+      quantity: number;
+      unitPrice: number;
+      discount: number;
+      totalPrice: number;
+    }
+
+    const calculatedCart: CalculatedCartItem[] = [];
 
     for (const cartItem of order.cart) {
       if (cartItem.product.quantity <= 0) {
@@ -98,6 +106,8 @@ class OrdersController {
         return;
       }
 
+      let selectedToppingsTotal = 0;
+
       for (const toppingItem of cartItem.chosenConfiguration.selectedToppings) {
         const topping = await this.toppingService.findOne({
           where: { id: toppingItem._id },
@@ -108,13 +118,9 @@ class OrdersController {
           next(createHttpError(400, `invalid topping id: ${toppingItem._id}`));
           return;
         }
-      }
 
-      const selectedToppingsTotal =
-        cartItem.chosenConfiguration.selectedToppings.reduce(
-          (sum, topping) => sum + topping.price,
-          0,
-        );
+        selectedToppingsTotal += topping.price;
+      }
 
       const priceConfigurationsTotal = Object.entries(
         cartItem.chosenConfiguration.priceConfigurations,
@@ -126,11 +132,24 @@ class OrdersController {
 
       const totalExcludeQuantity =
         selectedToppingsTotal + priceConfigurationsTotal;
-      const discount = coupon.discount || 0;
+      const discount = coupon.discount ?? 0;
       const totalWithoutDiscount =
         totalExcludeQuantity * cartItem.product.quantity;
-      total = totalWithoutDiscount - (totalWithoutDiscount * discount) / 100;
+
+      calculatedCart.push({
+        productId: product.id,
+        quantity: cartItem.product.quantity,
+        unitPrice: totalExcludeQuantity,
+        discount,
+        totalPrice:
+          totalWithoutDiscount - (totalWithoutDiscount * discount) / 100,
+      });
     }
+
+    const total = calculatedCart.reduce(
+      (sum, item) => sum + item.totalPrice,
+      0,
+    );
 
     const idempotencyKey = req.headers["idempotency-key"];
 
@@ -149,9 +168,11 @@ class OrdersController {
         this.logger.info(
           `Returning cached response for idempotency key: ${idempotencyKey}`,
         );
-        return res.json(existingIdempotency.response);
+        const existingIdempotencyResponse = JSON.parse(existingIdempotency.response) as { message: unknown; status: number };
+        return res.json(existingIdempotencyResponse.message).status(existingIdempotencyResponse.status);
       }
 
+      // TODO: Wrap in transaction
       const result = await this.orderService.create({
         address,
         customer,
@@ -163,24 +184,33 @@ class OrdersController {
         },
       });
 
+      await this.idempotencyService.create({
+        key: idempotencyKey,
+        response: JSON.stringify({ message: result, status: 201 }),
+      });
+
       this.logger.info(`Order created with id: ${result.id}`);
       res.status(201).json(result);
       return;
-    } catch (error) {
-      this.logger.error(`Error creating order: ${(error as Error).message}`);
-
-      // Store failed idempotency record
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : JSON.stringify(err);
+      this.logger.error(`Error creating order: ${errorMessage}`);
       try {
         await this.idempotencyService.create({
           key: idempotencyKey,
-          response: { error: "internal server error", status: 500 },
+          response: JSON.stringify({
+            message: "internal server error",
+            status: 500,
+          }),
         });
-      } catch (idempotencyError) {
+      } catch (error_: unknown) {
+        const idempotencyErrorMessage =
+          error_ instanceof Error ? error_.message : JSON.stringify(error_);
         this.logger.error(
-          `Error storing idempotency record: ${(idempotencyError as Error).message}`,
+          `Error storing idempotency record: ${idempotencyErrorMessage}`,
         );
       }
-
       next(createHttpError(500, "internal server error"));
       return;
     }
@@ -203,10 +233,10 @@ class OrdersController {
 
       this.logger.info(`Fetched ${orders.length} orders`);
       return res.json({ page, limit, total, data: orders });
-    } catch (error) {
-      this.logger.error(
-        `Error fetching all orders: ${(error as Error).message}`,
-      );
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : JSON.stringify(err);
+      this.logger.error(`Error fetching all orders: ${errorMessage}`);
       next(createHttpError(500, "internal server error"));
     }
   }
@@ -236,9 +266,11 @@ class OrdersController {
 
       this.logger.info(`Fetched order with id: ${order.id}`);
       res.json(order);
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : JSON.stringify(err);
       this.logger.error(
-        `Error fetching order with id: ${req.params.id}: ${(error as Error).message}`,
+        `Error fetching order with id: ${req.params.id}: ${errorMessage}`,
       );
       next(createHttpError(500, "internal server error"));
     }
@@ -289,9 +321,11 @@ class OrdersController {
       );
       this.logger.info(`Order with id: ${req.params.id} updated`);
       res.json(updatedOrder);
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : JSON.stringify(err);
       this.logger.error(
-        `Error updating order with id: ${req.params.id}: ${(error as Error).message}`,
+        `Error updating order with id: ${req.params.id}: ${errorMessage}`,
       );
       next(createHttpError(500, "internal server error"));
     }
@@ -305,9 +339,11 @@ class OrdersController {
       });
       this.logger.info(`Order with id: ${req.params.id} deleted`);
       return res.json(order);
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : JSON.stringify(err);
       this.logger.error(
-        `Error deleting order with id: ${req.params.id}: ${(error as Error).message}`,
+        `Error deleting order with id: ${req.params.id}: ${errorMessage}`,
       );
       next(createHttpError(500, "internal server error"));
     }
