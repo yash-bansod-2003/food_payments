@@ -1,7 +1,7 @@
 import {
   PaymentGateway,
   PaymentGatewayOptions,
-} from "../types/paymentGateway.js";
+} from "../types/paymentGateway";
 import Stripe from "stripe";
 
 export class StripePaymentGateway implements PaymentGateway {
