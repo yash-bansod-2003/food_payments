@@ -20,6 +20,7 @@ import { Idempotency } from "@/idempotency/entity";
 import { Customer } from "@/customer/entity";
 import { Coupon } from "@/coupon/entity";
 import { Address } from "@/address/entity";
+import { createPaymentGatewayFactory } from "@/common/factories/paymentGatewayFactory.js";
 
 const router = Router();
 
@@ -31,7 +32,7 @@ const addressRepository = AppDataSource.getRepository(Address);
 const addressService = new AddressesService(addressRepository);
 const couponRepository = AppDataSource.getRepository(Coupon);
 const couponService = new CouponsService(couponRepository);
-
+const paymentGateway = createPaymentGatewayFactory();
 const ordersRepository = AppDataSource.getRepository(Order);
 const orderService = new OrdersService(ordersRepository);
 const ordersController = new OrdersController(
@@ -42,6 +43,7 @@ const ordersController = new OrdersController(
   toppingService,
   addressService,
   couponService,
+  paymentGateway,
   logger,
 );
 
