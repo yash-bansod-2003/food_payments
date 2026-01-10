@@ -1,5 +1,6 @@
 import logger from "@/common/lib/logger";
 import { toppingService } from "./service";
+import { MessageBrokerEvent } from "@/common/types/broker.js";
 
 interface ToppingMessage {
   _id: string;
@@ -13,12 +14,12 @@ interface ToppingMessage {
 class ToppingsBrokerHandler {
   async handleToppingCreateOrUpdate(message: string) {
     try {
-      const toppingsData = JSON.parse(message) as ToppingMessage;
-      logger.info(`Received topping message: ${JSON.stringify(toppingsData)}`);
+      const messageBrokerEvent = JSON.parse(message) as MessageBrokerEvent<ToppingMessage>;
+      logger.info(`Received topping event: ${JSON.stringify(messageBrokerEvent)}`);
+      const toppingsData = messageBrokerEvent.data;
       const existingTopping = await toppingService.findOne({
         where: { id: toppingsData._id },
       });
-
       if (!existingTopping) {
         await toppingService.create({
           id: toppingsData._id,
