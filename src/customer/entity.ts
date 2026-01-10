@@ -9,6 +9,13 @@ import {
 import { Address } from "@/address/entity";
 import { Order } from "@/order/entity";
 
+export interface CustomerMessage {
+  id: number;
+  firstname: string;
+  lastname: string;
+  email: string;
+}
+
 @Entity("customers")
 export class Customer {
   @PrimaryGeneratedColumn()
@@ -22,6 +29,12 @@ export class Customer {
 
   @Column({ type: "text", unique: true })
   email: string;
+
+  @Column({ type: "boolean", default: true })
+  is_active: boolean;
+
+  @Column({ type: "text", default: false })
+  payment_gateway_customer_id: string;
 
   @OneToMany(() => Address, (address) => address.customer)
   addresses: Address[];

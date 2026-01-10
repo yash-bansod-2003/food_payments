@@ -6,7 +6,9 @@ let paymentGateway: PaymentGateway | null = null;
 
 export const createPaymentGatewayFactory = (): PaymentGateway => {
   if (!paymentGateway) {
-    paymentGateway = new StripePaymentGateway(configuration.stripe.secret_key || "sk_test_123");
+    paymentGateway = new StripePaymentGateway(
+      configuration.stripe.secret_key || "sk_test_123",
+    );
   }
   return paymentGateway;
 };

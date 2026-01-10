@@ -5,7 +5,9 @@ import { MessageBrokerEvent } from "@/common/types/broker.js";
 class ProductBrokerHandler {
   async handleProductCreateOrUpdate(message: string) {
     try {
-      const messageBrokerEven = JSON.parse(message) as MessageBrokerEvent<ProductMessage>;
+      const messageBrokerEven = JSON.parse(
+        message,
+      ) as MessageBrokerEvent<ProductMessage>;
       const productData = messageBrokerEven.data;
       const existingProduct = await productService.findOne({
         where: { id: productData._id },

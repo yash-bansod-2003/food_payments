@@ -24,7 +24,7 @@ class OrdersController {
     private readonly couponService: CouponsService,
     private readonly paymentGateway: PaymentGateway,
     private readonly logger: Logger,
-  ) { }
+  ) {}
 
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     this.logger.info(`Creating order with data: ${JSON.stringify(req.body)}`);

@@ -5,7 +5,13 @@ export interface MessageBroker {
   consumeMessages(topics: string[], fromBeginning?: boolean): Promise<void>;
 }
 
-export type EVENT_TYPE = "product.created" | "product.updated" | "product.deleted" | "topping.created" | "topping.updated" | "topping.deleted";
+export type EVENT_TYPE =
+  | "product.created"
+  | "product.updated"
+  | "product.deleted"
+  | "topping.created"
+  | "topping.updated"
+  | "topping.deleted";
 
 export interface ProducerMeta {
   service: string;

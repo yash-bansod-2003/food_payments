@@ -14,8 +14,12 @@ interface ToppingMessage {
 class ToppingsBrokerHandler {
   async handleToppingCreateOrUpdate(message: string) {
     try {
-      const messageBrokerEvent = JSON.parse(message) as MessageBrokerEvent<ToppingMessage>;
-      logger.info(`Received topping event: ${JSON.stringify(messageBrokerEvent)}`);
+      const messageBrokerEvent = JSON.parse(
+        message,
+      ) as MessageBrokerEvent<ToppingMessage>;
+      logger.info(
+        `Received topping event: ${JSON.stringify(messageBrokerEvent)}`,
+      );
       const toppingsData = messageBrokerEvent.data;
       const existingTopping = await toppingService.findOne({
         where: { id: toppingsData._id },
