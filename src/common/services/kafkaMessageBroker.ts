@@ -8,6 +8,7 @@ import {
 } from "kafkajs";
 import { productBrokerHandler } from "../../product/brokerHandler";
 import { toppingsBrokerHandler } from "../../toppings/brokerHandler";
+import { customerBrokerHandler } from "../../customer/brokerHandler";
 
 export class KafkaMessageBroker implements MessageBroker {
   private readonly producer: Producer;
@@ -72,6 +73,11 @@ export class KafkaMessageBroker implements MessageBroker {
         }
         if (topic === "toppings-topic" && message.value) {
           await toppingsBrokerHandler.handleToppingCreateOrUpdate(
+            message.value.toString(),
+          );
+        }
+        if (topic === "customer-topic" && message.value) {
+          await customerBrokerHandler.handleCustomerCreateOrUpdate(
             message.value.toString(),
           );
         }

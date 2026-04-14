@@ -1,5 +1,6 @@
 import {
   PaymentGateway,
+  PaymentGatewayCustomer,
   PaymentGatewayOptions,
 } from "../types/paymentGateway";
 import Stripe from "stripe";
@@ -44,6 +45,60 @@ export class StripePaymentGateway implements PaymentGateway {
     return {
       sessionId: session.id,
       paymentUrl: session.url,
+    };
+  }
+
+  async getCustomerDetails(
+    customerId: string,
+  ): Promise<PaymentGatewayCustomer> {
+    const customer = (await this.stripe.customers.retrieve(
+      customerId,
+    )) as Stripe.Customer;
+    return {
+      id: customer.id,
+      ...(customer.address && {
+        address: {
+          line1: customer.address.line1,
+          line2: customer.address.line2,
+          city: customer.address.city,
+          state: customer.address.state,
+          postal_code: customer.address.postal_code,
+          country: customer.address.country,
+        },
+      }),
+      description: customer.description,
+      email: customer.email || "",
+      metadata: customer.metadata,
+      name: customer.name || "",
+      phone: customer.phone,
+    };
+  }
+
+  async createCustomer(
+    email: string,
+    name: string,
+  ): Promise<PaymentGatewayCustomer> {
+    const customer = await this.stripe.customers.create({
+      email,
+      name,
+    });
+    return {
+      id: customer.id,
+      ...(customer.address && {
+        address: {
+          line1: customer.address.line1,
+          line2: customer.address.line2,
+          city: customer.address.city,
+          state: customer.address.state,
+          postal_code: customer.address.postal_code,
+          country: customer.address.country,
+        },
+      }),
+      description: customer.description,
+      email: customer.email || "",
+      metadata: customer.metadata,
+      name: customer.name || "",
+      phone: customer.phone,
     };
   }
 }

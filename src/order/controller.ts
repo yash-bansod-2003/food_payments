@@ -12,6 +12,7 @@ import AddressesService from "@/address/service";
 import ProductsService from "@/product/service";
 import ToppingService from "@/toppings/service";
 import { PaymentGateway } from "@/common/types/paymentGateway";
+import { ResponseWithMetadata } from "@/common/types";
 
 class OrdersController {
   constructor(
@@ -194,17 +195,23 @@ class OrdersController {
           restaurantId: result.restaurantId,
           idempotencyKey: idempotencyKey,
         });
-
+      const responsePayload: ResponseWithMetadata<{
+        paymentUrl: string;
+        sessionId: string;
+      }> = {
+        data: { paymentUrl, sessionId },
+        success: true,
+      };
       await this.idempotencyService.create({
         key: idempotencyKey,
         response: JSON.stringify({
-          message: { paymentUrl, sessionId },
+          message: responsePayload,
           status: 201,
         }),
       });
 
       this.logger.info(`Order created with id: ${result.id}`);
-      res.status(201).json({ paymentUrl, sessionId });
+      res.status(201).json(responsePayload);
       return;
     } catch (error: unknown) {
       const errorMessage =
@@ -247,8 +254,18 @@ class OrdersController {
         }),
       });
 
+      const responseWithMetadata: ResponseWithMetadata<unknown> = {
+        data: orders,
+        success: true,
+        meta: {
+          page,
+          perPage: limit,
+          total,
+        }
+      }
+
       this.logger.info(`Fetched ${orders.length} orders`);
-      return res.json({ page, limit, total, data: orders });
+      return res.json(responseWithMetadata);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : JSON.stringify(error);
@@ -279,9 +296,12 @@ class OrdersController {
         next(createHttpError(403, "forbidden"));
         return;
       }
-
+      const responseWithMetadata: ResponseWithMetadata<unknown> = {
+        data: order,
+        success: true,
+      }
       this.logger.info(`Fetched order with id: ${order.id}`);
-      res.json(order);
+      res.json(responseWithMetadata);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : JSON.stringify(error);
@@ -328,15 +348,21 @@ class OrdersController {
           return;
         }
       }
-
-      const updatedOrder = await this.orderService.update(
+      await this.orderService.update(
         {
           id: Number(req.params.id),
         },
         order,
       );
+      const updatedOrder = await this.orderService.findOne({
+        where: { id: Number(req.params.id) },
+      });
+      const responseWithMetadata: ResponseWithMetadata<unknown> = {
+        data: updatedOrder,
+        success: true,
+      };
       this.logger.info(`Order with id: ${req.params.id} updated`);
-      res.json(updatedOrder);
+      res.json(responseWithMetadata);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : JSON.stringify(error);
@@ -353,8 +379,12 @@ class OrdersController {
       const order = await this.orderService.delete({
         id: Number(req.params.id),
       });
+      const responseWithMetadata: ResponseWithMetadata<unknown> = {
+        data: order,
+        success: true,
+      };
       this.logger.info(`Order with id: ${req.params.id} deleted`);
-      return res.json(order);
+      return res.json(responseWithMetadata);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : JSON.stringify(error);

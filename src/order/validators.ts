@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { NextFunction, Request, Response } from "express";
-import { PaymentMode } from "./types";
+import { PaymentMode, PaymentStatus } from "./types";
 
 export const cartItemValidationSchema = z.object({
   product: z.object({
@@ -35,26 +35,8 @@ export const orderCreateValidationSchema = z
 
 export const orderUpdateValidationSchema = z
   .object({
+    paymentStatus: z.enum([PaymentStatus.PENDING, PaymentStatus.COMPLETED, PaymentStatus.FAILED]).optional(),
     restaurantId: z.number().optional(),
-    paymentMode: z
-      .enum([PaymentMode.CARD, PaymentMode.CASH, PaymentMode.UPI])
-      .optional(),
-    metadata: z.record(z.string(), z.unknown()).optional(),
-    customer: z
-      .object({
-        id: z.number(),
-      })
-      .optional(),
-    address: z
-      .object({
-        id: z.number(),
-      })
-      .optional(),
-    coupon: z
-      .object({
-        id: z.number(),
-      })
-      .optional(),
   })
   .strict();
 

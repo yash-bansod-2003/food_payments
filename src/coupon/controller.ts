@@ -12,7 +12,7 @@ class CouponsController {
   constructor(
     private readonly couponService: CouponsService,
     private readonly logger: Logger,
-  ) {}
+  ) { }
 
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     this.logger.info(`Creating coupon with data: ${JSON.stringify(req.body)}`);
@@ -145,12 +145,17 @@ class CouponsController {
         }
       }
 
-      const updatedCoupon = await this.couponService.update(
+      await this.couponService.update(
         {
           id: Number(req.params.id),
         },
         coupon,
       );
+
+      const updatedCoupon = await this.couponService.findOne({
+        where: { id: Number(req.params.id) },
+      });
+
       this.logger.info(`Coupon with id: ${req.params.id} updated`);
       res.json(updatedCoupon);
     } catch (error) {

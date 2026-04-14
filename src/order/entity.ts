@@ -9,7 +9,7 @@ import {
 import { Coupon } from "@/coupon/entity";
 import { Customer } from "@/customer/entity";
 import { Address } from "@/address/entity";
-import { PaymentMode } from "./types";
+import { PaymentMode, PaymentStatus } from "./types";
 
 @Entity("orders")
 export class Order {
@@ -21,6 +21,9 @@ export class Order {
 
   @Column({ type: "text", enum: PaymentMode })
   paymentMode: PaymentMode;
+
+  @Column({ type: "text", enum: PaymentStatus, default: PaymentStatus.PENDING })
+  paymentStatus: PaymentStatus;
 
   @Column({ type: "jsonb", nullable: true })
   metadata: Record<string, unknown>;

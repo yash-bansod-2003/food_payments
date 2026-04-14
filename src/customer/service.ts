@@ -10,9 +10,10 @@ import {
 } from "typeorm";
 import { Customer } from "./entity";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
+import { AppDataSource } from "@/data-source";
 
 class CustomersService {
-  constructor(private readonly customersRepository: Repository<Customer>) {}
+  constructor(private readonly customersRepository: Repository<Customer>) { }
   /**
    * Create a new customer in the database.
    *
@@ -74,4 +75,7 @@ class CustomersService {
   }
 }
 
+const customersRepository = AppDataSource.getRepository(Customer);
+const customerService = new CustomersService(customersRepository);
 export default CustomersService;
+export { customerService };
