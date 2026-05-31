@@ -48,28 +48,30 @@ class AddressesController {
   }
 
   async findOne(req: Request, res: Response, next: NextFunction) {
-    this.logger.info(`Fetching address with id: ${req.params.id}`);
+    const id = Number(req.params.id);
+    this.logger.info(`Fetching address with id: ${id}`);
     try {
       const address = await this.addressService.findOne({
-        where: { id: Number(req.params.id) },
+        where: { id },
       });
       if (!address) {
-        this.logger.error(`Address with id: ${req.params.id} not found`);
+        this.logger.error(`Address with id: ${id} not found`);
         return next(createHttpError(404, "address not found"));
       }
       this.logger.info(`Fetched address with id: ${address.id}`);
       res.json(address);
     } catch (error) {
       this.logger.error(
-        `Error fetching address with id: ${req.params.id}: ${(error as Error).message}`,
+        `Error fetching address with id: ${id}: ${(error as Error).message}`,
       );
       next(createHttpError(500, "internal server error"));
     }
   }
 
   async update(req: Request, res: Response, next: NextFunction) {
+    const id = Number(req.params.id);
     this.logger.info(
-      `Updating address with id: ${req.params.id} with data: ${JSON.stringify(req.body)}`,
+      `Updating address with id: ${id} with data: ${JSON.stringify(req.body)}`,
     );
     const address = req.body as Address;
 
@@ -80,27 +82,28 @@ class AddressesController {
         },
         address,
       );
-      this.logger.info(`Address with id: ${req.params.id} updated`);
+      this.logger.info(`Address with id: ${id} updated`);
       res.json(updatedAddress);
     } catch (error) {
       this.logger.error(
-        `Error updating address with id: ${req.params.id}: ${(error as Error).message}`,
+        `Error updating address with id: ${id}: ${(error as Error).message}`,
       );
       next(createHttpError(500, "internal server error"));
     }
   }
 
   async delete(req: Request, res: Response, next: NextFunction) {
-    this.logger.info(`Deleting address with id: ${req.params.id}`);
+    const id = Number(req.params.id);
+    this.logger.info(`Deleting address with id: ${id}`);
     try {
       const address = await this.addressService.delete({
         id: Number(req.params.id),
       });
-      this.logger.info(`Address with id: ${req.params.id} deleted`);
+      this.logger.info(`Address with id: ${id} deleted`);
       return res.json(address);
     } catch (error) {
       this.logger.error(
-        `Error deleting address with id: ${req.params.id}: ${(error as Error).message}`,
+        `Error deleting address with id: ${id}: ${(error as Error).message}`,
       );
       next(createHttpError(500, "internal server error"));
     }

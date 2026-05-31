@@ -12,7 +12,7 @@ class CouponsController {
   constructor(
     private readonly couponService: CouponsService,
     private readonly logger: Logger,
-  ) { }
+  ) {}
 
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     this.logger.info(`Creating coupon with data: ${JSON.stringify(req.body)}`);
@@ -77,13 +77,14 @@ class CouponsController {
   }
 
   async findOne(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    this.logger.info(`Fetching coupon with id: ${req.params.id}`);
+    const couponId = Number(req.params.id);
+    this.logger.info(`Fetching coupon with id: ${couponId}`);
     try {
       const coupon = await this.couponService.findOne({
-        where: { id: Number(req.params.id) },
+        where: { id: couponId },
       });
       if (!coupon) {
-        this.logger.error(`Coupon with id: ${req.params.id} not found`);
+        this.logger.error(`Coupon with id: ${couponId} not found`);
         return next(createHttpError(404, "coupon not found"));
       }
 
@@ -102,26 +103,27 @@ class CouponsController {
       res.json(coupon);
     } catch (error) {
       this.logger.error(
-        `Error fetching coupon with id: ${req.params.id}: ${(error as Error).message}`,
+        `Error fetching coupon with id: ${couponId}: ${(error as Error).message}`,
       );
       next(createHttpError(500, "internal server error"));
     }
   }
 
   async update(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    const couponId = Number(req.params.id);
     this.logger.info(
-      `Updating coupon with id: ${req.params.id} with data: ${JSON.stringify(req.body)}`,
+      `Updating coupon with id: ${couponId} with data: ${JSON.stringify(req.body)}`,
     );
     const coupon = req.body as Coupon;
 
     try {
       if (req.auth.role === ROLES.MANAGER) {
         const existingCoupon = await this.couponService.findOne({
-          where: { id: Number(req.params.id) },
+          where: { id: couponId },
         });
 
         if (!existingCoupon) {
-          this.logger.error(`Coupon with id: ${req.params.id} not found`);
+          this.logger.error(`Coupon with id: ${couponId} not found`);
           return next(createHttpError(404, "coupon not found"));
         }
 
@@ -156,27 +158,28 @@ class CouponsController {
         where: { id: Number(req.params.id) },
       });
 
-      this.logger.info(`Coupon with id: ${req.params.id} updated`);
+      this.logger.info(`Coupon with id: ${couponId} updated`);
       res.json(updatedCoupon);
     } catch (error) {
       this.logger.error(
-        `Error updating coupon with id: ${req.params.id}: ${(error as Error).message}`,
+        `Error updating coupon with id: ${couponId}: ${(error as Error).message}`,
       );
       next(createHttpError(500, "internal server error"));
     }
   }
 
   async delete(req: Request, res: Response, next: NextFunction) {
-    this.logger.info(`Deleting coupon with id: ${req.params.id}`);
+    const couponId = Number(req.params.id);
+    this.logger.info(`Deleting coupon with id: ${couponId}`);
     try {
       const coupon = await this.couponService.delete({
-        id: Number(req.params.id),
+        id: couponId,
       });
-      this.logger.info(`Coupon with id: ${req.params.id} deleted`);
+      this.logger.info(`Coupon with id: ${couponId} deleted`);
       return res.json(coupon);
     } catch (error) {
       this.logger.error(
-        `Error deleting coupon with id: ${req.params.id}: ${(error as Error).message}`,
+        `Error deleting coupon with id: ${couponId}: ${(error as Error).message}`,
       );
       next(createHttpError(500, "internal server error"));
     }

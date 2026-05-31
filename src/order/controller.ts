@@ -25,7 +25,7 @@ class OrdersController {
     private readonly couponService: CouponsService,
     private readonly paymentGateway: PaymentGateway,
     private readonly logger: Logger,
-  ) { }
+  ) {}
 
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     this.logger.info(`Creating order with data: ${JSON.stringify(req.body)}`);
@@ -261,8 +261,8 @@ class OrdersController {
           page,
           perPage: limit,
           total,
-        }
-      }
+        },
+      };
 
       this.logger.info(`Fetched ${orders.length} orders`);
       return res.json(responseWithMetadata);
@@ -275,14 +275,15 @@ class OrdersController {
   }
 
   async findOne(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    this.logger.info(`Fetching order with id: ${req.params.id}`);
+    const orderId = Number(req.params.id);
+    this.logger.info(`Fetching order with id: ${orderId}`);
     try {
       const order = await this.orderService.findOne({
-        where: { id: Number(req.params.id) },
+        where: { id: orderId },
         relations: ["customer", "address", "coupon"],
       });
       if (!order) {
-        this.logger.error(`Order with id: ${req.params.id} not found`);
+        this.logger.error(`Order with id: ${orderId} not found`);
         return next(createHttpError(404, "order not found"));
       }
 
@@ -299,33 +300,34 @@ class OrdersController {
       const responseWithMetadata: ResponseWithMetadata<unknown> = {
         data: order,
         success: true,
-      }
+      };
       this.logger.info(`Fetched order with id: ${order.id}`);
       res.json(responseWithMetadata);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : JSON.stringify(error);
       this.logger.error(
-        `Error fetching order with id: ${req.params.id}: ${errorMessage}`,
+        `Error fetching order with id: ${orderId}: ${errorMessage}`,
       );
       next(createHttpError(500, "internal server error"));
     }
   }
 
   async update(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    const orderId = Number(req.params.id);
     this.logger.info(
-      `Updating order with id: ${req.params.id} with data: ${JSON.stringify(req.body)}`,
+      `Updating order with id: ${orderId} with data: ${JSON.stringify(req.body)}`,
     );
     const order = req.body as UpdateOrderDto;
 
     try {
       if (req.auth.role === ROLES.MANAGER) {
         const existingOrder = await this.orderService.findOne({
-          where: { id: Number(req.params.id) },
+          where: { id: orderId },
         });
 
         if (!existingOrder) {
-          this.logger.error(`Order with id: ${req.params.id} not found`);
+          this.logger.error(`Order with id: ${orderId} not found`);
           return next(createHttpError(404, "order not found"));
         }
 
@@ -350,46 +352,47 @@ class OrdersController {
       }
       await this.orderService.update(
         {
-          id: Number(req.params.id),
+          id: orderId,
         },
         order,
       );
       const updatedOrder = await this.orderService.findOne({
-        where: { id: Number(req.params.id) },
+        where: { id: orderId },
       });
       const responseWithMetadata: ResponseWithMetadata<unknown> = {
         data: updatedOrder,
         success: true,
       };
-      this.logger.info(`Order with id: ${req.params.id} updated`);
+      this.logger.info(`Order with id: ${orderId} updated`);
       res.json(responseWithMetadata);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : JSON.stringify(error);
       this.logger.error(
-        `Error updating order with id: ${req.params.id}: ${errorMessage}`,
+        `Error updating order with id: ${orderId}: ${errorMessage}`,
       );
       next(createHttpError(500, "internal server error"));
     }
   }
 
   async delete(req: Request, res: Response, next: NextFunction) {
-    this.logger.info(`Deleting order with id: ${req.params.id}`);
+    const orderId = Number(req.params.id);
+    this.logger.info(`Deleting order with id: ${orderId}`);
     try {
       const order = await this.orderService.delete({
-        id: Number(req.params.id),
+        id: orderId,
       });
       const responseWithMetadata: ResponseWithMetadata<unknown> = {
         data: order,
         success: true,
       };
-      this.logger.info(`Order with id: ${req.params.id} deleted`);
+      this.logger.info(`Order with id: ${orderId} deleted`);
       return res.json(responseWithMetadata);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : JSON.stringify(error);
       this.logger.error(
-        `Error deleting order with id: ${req.params.id}: ${errorMessage}`,
+        `Error deleting order with id: ${orderId}: ${errorMessage}`,
       );
       next(createHttpError(500, "internal server error"));
     }
