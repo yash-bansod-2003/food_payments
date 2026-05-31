@@ -35,7 +35,13 @@ export const orderCreateValidationSchema = z
 
 export const orderUpdateValidationSchema = z
   .object({
-    paymentStatus: z.enum([PaymentStatus.PENDING, PaymentStatus.COMPLETED, PaymentStatus.FAILED]).optional(),
+    paymentStatus: z
+      .enum([
+        PaymentStatus.PENDING,
+        PaymentStatus.COMPLETED,
+        PaymentStatus.FAILED,
+      ])
+      .optional(),
     restaurantId: z.number().optional(),
   })
   .strict();
